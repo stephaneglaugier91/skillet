@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from skillet.discovery import NoSkillsDeclared, PackageNotFound, discover, find_source
+from skillet.discovery import NoSkillsDeclaredError, PackageNotFoundError, discover, find_source
 
 
 def test_discover_returns_sources_with_skills(fake_package):
@@ -38,7 +38,7 @@ def test_find_source_normalizes_underscore_dash(fake_package):
 def test_find_source_missing_raises(fake_package):
     fake_package("alpha", skills={"alpha": "# alpha"})
 
-    with pytest.raises(PackageNotFound):
+    with pytest.raises(PackageNotFoundError):
         find_source("does-not-exist")
 
 
@@ -69,11 +69,10 @@ def test_skill_root_with_direct_skill_md(tmp_path, monkeypatch):
         dist=SimpleNamespace(name="betapkg", version="0.1"),
     )
 
-    class EPs:
-        def select(self, group):
-            return [ep] if group == "skillet.skills" else []
+    def fake_entry_points(*, group=None):
+        return [ep] if group == "skillet.skills" else []
 
-    monkeypatch.setattr(md, "entry_points", lambda: EPs())
+    monkeypatch.setattr(md, "entry_points", fake_entry_points)
 
     src = find_source("betapkg")
     assert [s.name for s in src.skills] == ["skills"]
@@ -103,11 +102,10 @@ def test_no_skills_declared_raises(tmp_path, monkeypatch):
         dist=SimpleNamespace(name="empty", version="0.1"),
     )
 
-    class EPs:
-        def select(self, group):
-            return [ep] if group == "skillet.skills" else []
+    def fake_entry_points(*, group=None):
+        return [ep] if group == "skillet.skills" else []
 
-    monkeypatch.setattr(md, "entry_points", lambda: EPs())
+    monkeypatch.setattr(md, "entry_points", fake_entry_points)
 
-    with pytest.raises(NoSkillsDeclared):
+    with pytest.raises(NoSkillsDeclaredError):
         find_source("empty")

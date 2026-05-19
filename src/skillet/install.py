@@ -3,13 +3,17 @@ from __future__ import annotations
 import json
 import shutil
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
-from skillet.discovery import Skill, SkillSource, find_source
+from skillet.discovery import Skill, find_source
 from skillet.paths import ResolvedTarget, Target, resolve_target
 
 MANIFEST_VERSION = 1
+
+Manifest = dict[str, Any]
+PackageEntry = dict[str, Any]
 
 
 @dataclass(frozen=True)
@@ -23,19 +27,20 @@ class InstallResult:
     orphans_removed: tuple[str, ...] = ()
 
 
-def _load_manifest(path: Path) -> dict:
+def _load_manifest(path: Path) -> Manifest:
+    empty: Manifest = {"version": MANIFEST_VERSION, "packages": {}}
     if not path.is_file():
-        return {"version": MANIFEST_VERSION, "packages": {}}
+        return empty
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        data: Manifest = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
-        return {"version": MANIFEST_VERSION, "packages": {}}
+        return empty
     data.setdefault("version", MANIFEST_VERSION)
     data.setdefault("packages", {})
     return data
 
 
-def _save_manifest(path: Path, data: dict) -> None:
+def _save_manifest(path: Path, data: Manifest) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
@@ -99,7 +104,7 @@ def install(
         packages[source.package] = {
             "version": source.distribution_version,
             "skills": sorted(installed),
-            "installed_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "installed_at": datetime.now(UTC).isoformat(timespec="seconds"),
         }
         _save_manifest(resolved.manifest_path, manifest)
     elif had_existing_entry and not source_names:
@@ -159,13 +164,16 @@ def list_installed(
     *,
     project_root: Path | None = None,
     home: Path | None = None,
-) -> dict[str, dict]:
+) -> dict[str, PackageEntry]:
     """Return the manifest's packages mapping for the given target."""
     resolved = resolve_target(target, project_root=project_root, home=home)
-    return _load_manifest(resolved.manifest_path)["packages"]
+    packages: dict[str, PackageEntry] = _load_manifest(resolved.manifest_path)["packages"]
+    return packages
 
 
-def _match_package(packages: dict, package: str) -> tuple[str, dict] | None:
+def _match_package(
+    packages: dict[str, PackageEntry], package: str
+) -> tuple[str, PackageEntry] | None:
     needle = package.lower().replace("_", "-")
     for key, value in packages.items():
         if key.lower().replace("_", "-") == needle:
@@ -173,5 +181,7 @@ def _match_package(packages: dict, package: str) -> tuple[str, dict] | None:
     return None
 
 
-def target_summary(target: Target, *, project_root: Path | None = None, home: Path | None = None) -> ResolvedTarget:
+def target_summary(
+    target: Target, *, project_root: Path | None = None, home: Path | None = None
+) -> ResolvedTarget:
     return resolve_target(target, project_root=project_root, home=home)

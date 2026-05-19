@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib
 import importlib.metadata as md
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -25,7 +26,7 @@ class SkillSource:
     root: Path
     skills: tuple[Skill, ...]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Skill]:
         return iter(self.skills)
 
 
@@ -33,21 +34,16 @@ class SkilletError(Exception):
     pass
 
 
-class PackageNotFound(SkilletError):
+class PackageNotFoundError(SkilletError):
     pass
 
 
-class NoSkillsDeclared(SkilletError):
+class NoSkillsDeclaredError(SkilletError):
     pass
 
 
 def _entry_points_for_group(group: str) -> list[md.EntryPoint]:
-    eps = md.entry_points()
-    # importlib.metadata API differs slightly across versions; both forms are supported.
-    select = getattr(eps, "select", None)
-    if callable(select):
-        return list(select(group=group))
-    return list(eps.get(group, []))  # type: ignore[union-attr]
+    return list(md.entry_points(group=group))
 
 
 def _resolve_entry_point_dir(ep: md.EntryPoint) -> Path:
@@ -123,12 +119,12 @@ def find_source(package: str) -> SkillSource:
         try:
             root = _resolve_entry_point_dir(ep)
         except ModuleNotFoundError as exc:
-            raise PackageNotFound(
+            raise PackageNotFoundError(
                 f"Package {package!r} declares skills but its module {exc.name!r} is not importable."
             ) from exc
         skills = _collect_skills(root)
         if not skills:
-            raise NoSkillsDeclared(
+            raise NoSkillsDeclaredError(
                 f"Package {package!r} declares a {ENTRY_POINT_GROUP} entry point but the "
                 f"directory {root} contains no SKILL.md files."
             )
@@ -138,7 +134,7 @@ def find_source(package: str) -> SkillSource:
             root=root,
             skills=skills,
         )
-    raise PackageNotFound(
+    raise PackageNotFoundError(
         f"No installed package named {package!r} publishes skills via the "
         f"{ENTRY_POINT_GROUP!r} entry point."
     )

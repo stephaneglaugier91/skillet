@@ -2,15 +2,13 @@ from __future__ import annotations
 
 import argparse
 import sys
-from pathlib import Path
 
 from skillet import __version__
 from skillet.discovery import (
-    NoSkillsDeclared,
-    PackageNotFound,
+    NoSkillsDeclaredError,
+    PackageNotFoundError,
     SkilletError,
     discover,
-    find_source,
 )
 from skillet.install import install, list_installed, target_summary, uninstall
 from skillet.paths import Target
@@ -40,7 +38,9 @@ def _add_target_flags(parser: argparse.ArgumentParser) -> None:
     parser.set_defaults(target=Target.LOCAL)
 
 
-def build_parser(prog: str = "skillet", *, fixed_package: str | None = None) -> argparse.ArgumentParser:
+def build_parser(
+    prog: str = "skillet", *, fixed_package: str | None = None
+) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog=prog,
         description="Install Claude Code skills shipped by Python packages.",
@@ -83,11 +83,18 @@ def build_parser(prog: str = "skillet", *, fixed_package: str | None = None) -> 
     return parser
 
 
-def _cmd_install(args: argparse.Namespace) -> int:
+def _resolve_package(args: argparse.Namespace) -> str:
     package = getattr(args, "package", None) or getattr(args, "_fixed_package", None)
+    if not package:
+        raise AssertionError("argparse should have required a package argument")
+    return str(package)
+
+
+def _cmd_install(args: argparse.Namespace) -> int:
+    package = _resolve_package(args)
     try:
         result = install(package, args.target, force=args.force)
-    except (PackageNotFound, NoSkillsDeclared) as exc:
+    except (PackageNotFoundError, NoSkillsDeclaredError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
     except SkilletError as exc:
@@ -113,7 +120,7 @@ def _cmd_install(args: argparse.Namespace) -> int:
 
 
 def _cmd_uninstall(args: argparse.Namespace) -> int:
-    package = getattr(args, "package", None) or getattr(args, "_fixed_package", None)
+    package = _resolve_package(args)
     removed = uninstall(package, args.target)
     resolved = target_summary(args.target)
     if not removed:
@@ -165,7 +172,9 @@ def main(argv: list[str] | None = None) -> int:
     return _dispatch(args)
 
 
-def package_main(package_name: str, argv: list[str] | None = None, *, prog: str | None = None) -> int:
+def package_main(
+    package_name: str, argv: list[str] | None = None, *, prog: str | None = None
+) -> int:
     """Entry point for package authors who want to expose `<mypkg> skillet ...` as their own CLI.
 
     Wire it up in your package's `[project.scripts]`, e.g.::

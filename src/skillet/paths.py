@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 
 
-class Target(str, Enum):
+class Target(StrEnum):
     LOCAL = "local"
     USER = "user"
 
@@ -17,7 +17,9 @@ class ResolvedTarget:
     manifest_path: Path
 
 
-def resolve_target(target: Target, *, project_root: Path | None = None, home: Path | None = None) -> ResolvedTarget:
+def resolve_target(
+    target: Target, *, project_root: Path | None = None, home: Path | None = None
+) -> ResolvedTarget:
     """Resolve a Target enum to an absolute skills directory.
 
     - LOCAL → <project_root>/.claude/skills
