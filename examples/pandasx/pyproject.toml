@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pandasx"
+version = "0.0.1"
+description = "Demo package that ships a Claude Code skill via skillet."
+requires-python = ">=3.10"
+dependencies = ["skillet"]
+
+[project.scripts]
+pandasx-skillet = "pandasx._skillet_entry:main"
+
+[project.entry-points."skillet.skills"]
+pandasx = "pandasx.skills"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"pandasx.skills" = ["**/*"]
