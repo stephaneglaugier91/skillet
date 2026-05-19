@@ -24,11 +24,8 @@ jobs:
       - name: Set up Python
         run: uv python install 3.12
 
-      - name: Build sdist and wheel
-        run: uv build
-
-      - name: Check distribution metadata
-        run: uv tool run twine check dist/*
+      - name: Build and check distribution
+        run: make build-check
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

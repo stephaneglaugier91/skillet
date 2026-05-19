@@ -21,6 +21,4 @@ For small fixes (typos, doc tweaks), feel free to keep it short.
 
 - [ ] Tests added or updated (or N/A)
 - [ ] Docs updated (README, docstrings) (or N/A)
-- [ ] `uv run pre-commit run --all-files` passes
-- [ ] `uv run mypy` passes
-- [ ] `uv run pytest` passes
+- [ ] `make check` passes locally

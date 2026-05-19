@@ -154,16 +154,15 @@ See `examples/pandasx/` for a complete demo package.
 ## Development
 
 skillet uses [uv](https://docs.astral.sh/uv/) and supports Python 3.12+.
+All dev workflows go through `make`:
 
 ```bash
 git clone https://github.com/stephaneglaugier91/skillet
 cd skillet
-uv sync
-uv run pre-commit install
-
-uv run pytest             # tests
-uv run ruff check         # lint
-uv run mypy               # type-check
+make sync       # install deps
+make hooks      # install pre-commit hooks
+make check      # lint + format-check + types + tests
+make help       # see every target
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow and

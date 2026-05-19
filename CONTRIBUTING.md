@@ -4,8 +4,9 @@ Thanks for your interest in contributing! This guide will get you set up.
 
 ## Development environment
 
-skillet uses [uv](https://docs.astral.sh/uv/) for dependency management and
-[Hatchling](https://hatch.pypa.io/latest/) as the build backend.
+skillet uses [uv](https://docs.astral.sh/uv/) for dependency management,
+[Hatchling](https://hatch.pypa.io/latest/) as the build backend, and a
+`Makefile` as the single entry point for every dev workflow.
 
 ### One-time setup
 
@@ -13,31 +14,33 @@ skillet uses [uv](https://docs.astral.sh/uv/) for dependency management and
 # Install uv (see https://docs.astral.sh/uv/getting-started/installation/)
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Clone and sync
+# Clone and bootstrap
 git clone https://github.com/stephaneglaugier91/skillet
 cd skillet
-uv sync
-
-# Install pre-commit hooks
-uv run pre-commit install
+make sync          # creates .venv and installs deps
+make hooks         # installs the pre-commit git hooks
 ```
 
-`uv sync` creates a `.venv/` directory with the project installed in editable
-mode plus all dev dependencies. Activate it with `source .venv/bin/activate`
-or just prefix commands with `uv run`.
+`make sync` runs `uv sync`, which creates a `.venv/` with skillet installed
+in editable mode plus all dev dependencies.
 
 ## Running checks
 
 ```bash
-uv run pytest                 # tests
-uv run pytest --cov           # with coverage
-uv run ruff check             # lint
-uv run ruff format            # format
-uv run mypy                   # type-check
-uv run pre-commit run --all-files   # everything pre-commit covers
+make help          # list every target
+make check         # full local CI: lint + format-check + types + tests
+make test          # just the tests
+make test-cov      # tests with coverage
+make fmt           # format and apply auto-fixes
+make lint          # ruff lint check
+make typecheck     # mypy strict
+make pre-commit    # run every pre-commit hook
+make build-check   # build sdist+wheel and run twine check
 ```
 
-CI runs the same set on every PR.
+CI runs the same checks (via `make pre-commit`, `make typecheck`, etc.) on
+every PR, so `make check` locally matches CI almost exactly. Run it
+before opening a PR.
 
 ## Supported Python versions
 

@@ -33,15 +33,24 @@ That's it. Future releases need only a tag.
 
 ## Cutting a release
 
+The easiest path is the `/release X.Y.Z` Claude Code slash command, which
+runs the procedure below with safety checks.
+
+Manual procedure:
+
 ```bash
 # 1. Make sure main is green and you're up to date.
 git checkout main
-git pull
+git pull --ff-only
 
-# 2. Bump the version in pyproject.toml.
+# 2. Verify everything passes locally before cutting.
+make check
+make build-check
+
+# 3. Bump the version in pyproject.toml.
 $EDITOR pyproject.toml          # version = "X.Y.Z"
 
-# 3. Commit and tag.
+# 4. Commit and tag.
 git commit -am "Release vX.Y.Z"
 git tag -a vX.Y.Z -m "vX.Y.Z"
 git push origin main

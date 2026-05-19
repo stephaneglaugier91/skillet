@@ -216,3 +216,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Claude Code
+# Project-wide settings/hooks/commands ARE checked in. Only the
+# per-user override file is ignored.
+.claude/settings.local.json

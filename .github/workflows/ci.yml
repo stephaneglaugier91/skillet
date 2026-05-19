@@ -32,7 +32,7 @@ jobs:
         run: uv sync --frozen
 
       - name: Run pre-commit
-        run: uv run pre-commit run --all-files --show-diff-on-failure
+        run: make pre-commit
 
   typecheck:
     name: Type check (mypy)
@@ -52,7 +52,7 @@ jobs:
         run: uv sync --frozen
 
       - name: Run mypy
-        run: uv run mypy
+        run: make typecheck
 
   test:
     name: Test ${{ matrix.python-version }} / ${{ matrix.os }}
@@ -81,6 +81,9 @@ jobs:
       - name: Install project
         run: uv sync --frozen --python ${{ matrix.python-version }}
 
+      # Use uv directly so we can pass --python and stay portable on
+      # Windows (where `make` isn't guaranteed). The Makefile mirrors this
+      # exact command in `make test-cov`.
       - name: Run tests with coverage
         run: uv run --python ${{ matrix.python-version }} pytest --cov --cov-report=xml --cov-report=term
 
@@ -108,12 +111,8 @@ jobs:
       - name: Set up Python
         run: uv python install 3.12
 
-      - name: Build sdist and wheel
-        run: uv build
-
-      - name: Check distribution metadata
-        run: |
-          uv tool run twine check dist/*
+      - name: Build and check distribution
+        run: make build-check
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
