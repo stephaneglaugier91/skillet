@@ -1,6 +1,9 @@
 version: 2
 updates:
-  - package-ecosystem: "pip"
+  # Use the uv ecosystem (not pip) so Dependabot updates both
+  # pyproject.toml AND uv.lock — CI runs `uv sync --frozen`, so stale
+  # lock entries would otherwise leave us pinned to old versions.
+  - package-ecosystem: "uv"
     directory: "/"
     schedule:
       interval: "weekly"

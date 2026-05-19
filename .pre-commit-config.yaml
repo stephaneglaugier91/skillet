@@ -11,10 +11,13 @@ repos:
       - id: mixed-line-ending
         args: [--fix=lf]
 
+  # Keep the rev pin and the `ruff` version in pyproject.toml's
+  # [dependency-groups].dev in sync — otherwise CI's `make pre-commit` and
+  # local `make lint` / `make fmt` can disagree on rule output.
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.6
+    rev: v0.15.13
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: [--fix]
       - id: ruff-format
 

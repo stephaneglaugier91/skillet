@@ -1,5 +1,8 @@
 """Ship Claude Code skills alongside your Python package."""
 
+from importlib.metadata import PackageNotFoundError as _PkgNotFound
+from importlib.metadata import version as _pkg_version
+
 from skillet.discovery import (
     NoSkillsDeclaredError,
     PackageNotFoundError,
@@ -12,7 +15,11 @@ from skillet.discovery import (
 from skillet.install import InstallResult, install, list_installed, uninstall
 from skillet.paths import Target, resolve_target
 
-__version__ = "0.1.0"
+try:
+    __version__ = _pkg_version("skillet")
+except _PkgNotFound:  # pragma: no cover — only hit when running from a
+    # source tree without an installed distribution.
+    __version__ = "0.0.0+unknown"
 
 __all__ = [
     "InstallResult",

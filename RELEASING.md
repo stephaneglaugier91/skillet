@@ -48,9 +48,13 @@ make check
 make build-check
 
 # 3. Bump the version in pyproject.toml.
+#    This is the only place the version lives; `skillet.__version__` is
+#    read from the installed package metadata at import time.
 $EDITOR pyproject.toml          # version = "X.Y.Z"
 
-# 4. Commit and tag.
+# 4. Re-sync so the editable install picks up the new version, then
+#    commit and tag.
+uv sync
 git commit -am "Release vX.Y.Z"
 git tag -a vX.Y.Z -m "vX.Y.Z"
 git push origin main

@@ -18,7 +18,12 @@ Procedure:
    - Run `make build-check`. If it fails, stop and report.
 4. **Bump the version.**
    - Edit `pyproject.toml`: change `version = "..."` to `version = "$1"`.
+     This is the only place the version lives — `skillet.__version__` is
+     derived from the installed package metadata, so it picks up the new
+     value automatically after `uv sync`.
+   - Run `uv sync` to refresh the editable install metadata.
    - Run `make check` once more to make sure the bump didn't break anything.
+   - Sanity-check: `uv run skillet --version` should now print `skillet $1`.
 5. **Confirm with the user** before doing anything destructive. Show them:
    - The new version.
    - That you're about to commit, tag, and push.
