@@ -99,11 +99,15 @@ def _cmd_install(args: argparse.Namespace) -> int:
         for name in result.installed:
             tag = " (replaced)" if name in result.replaced else ""
             print(f"  + {name}{tag}")
+    if result.orphans_removed:
+        print("Removed (no longer shipped by this version of the package):")
+        for name in result.orphans_removed:
+            print(f"  - {name}")
     if result.skipped:
         print("Skipped (already present, not owned by skillet; pass --force to overwrite):")
         for name in result.skipped:
             print(f"  - {name}")
-    if not result.installed and not result.skipped:
+    if not result.installed and not result.skipped and not result.orphans_removed:
         print("  (no skills found)")
     return 0
 

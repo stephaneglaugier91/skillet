@@ -44,6 +44,7 @@ def _make_fake_package(tmp_path: Path, name: str, skills: dict[str, str]) -> Pat
 @pytest.fixture
 def fake_package(tmp_path, monkeypatch):
     """Build a fake on-disk package and wire it into entry-point discovery."""
+    created_module_names: set[str] = set()
 
     def _build(name: str = "fakepkg", skills: dict[str, str] | None = None, version: str = "1.2.3"):
         if skills is None:
@@ -51,7 +52,8 @@ def fake_package(tmp_path, monkeypatch):
         site = tmp_path / "site"
         site.mkdir(exist_ok=True)
         _make_fake_package(site, name, skills)
-        sys.path.insert(0, str(site))
+        # syspath_prepend is auto-reverted at teardown; raw sys.path.insert is not.
+        monkeypatch.syspath_prepend(str(site))
 
         ep = _FakeEntryPoint(name=name, value=f"{name}.skills", dist_name=name, dist_version=version)
 
@@ -66,12 +68,19 @@ def fake_package(tmp_path, monkeypatch):
             return EPs()
 
         monkeypatch.setattr(md, "entry_points", fake_entry_points)
-        # Clear any cached import of the fake module
+        # Drop any cached import so a re-created package on disk is re-imported.
         sys.modules.pop(name, None)
         sys.modules.pop(f"{name}.skills", None)
+        created_module_names.add(name)
         return name
 
     yield _build
+
+    # Teardown: drop any modules we imported under fake names so a later test
+    # that reuses the name doesn't accidentally pick up the stale module object.
+    for n in created_module_names:
+        sys.modules.pop(n, None)
+        sys.modules.pop(f"{n}.skills", None)
 
 
 @pytest.fixture

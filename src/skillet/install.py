@@ -20,6 +20,7 @@ class InstallResult:
     installed: tuple[str, ...]
     skipped: tuple[str, ...]
     replaced: tuple[str, ...]
+    orphans_removed: tuple[str, ...] = ()
 
 
 def _load_manifest(path: Path) -> dict:
@@ -63,8 +64,22 @@ def install(
 
     manifest = _load_manifest(resolved.manifest_path)
     packages = manifest["packages"]
-    existing_entry = packages.get(source.package, {})
-    previously_owned = set(existing_entry.get("skills", []))
+    had_existing_entry = source.package in packages
+    previously_owned = set(packages.get(source.package, {}).get("skills", []))
+    source_names = {s.name for s in source.skills}
+
+    # Clean up skills we previously owned that this version of the source no
+    # longer ships. Without this, the manifest (and the user's skills dir) would
+    # accumulate stale files across upgrades.
+    orphans_removed: list[str] = []
+    for orphan in sorted(previously_owned - source_names):
+        orphan_path = resolved.skills_dir / orphan
+        if orphan_path.is_dir():
+            shutil.rmtree(orphan_path)
+            orphans_removed.append(orphan)
+        elif orphan_path.exists():
+            orphan_path.unlink()
+            orphans_removed.append(orphan)
 
     installed: list[str] = []
     skipped: list[str] = []
@@ -80,12 +95,21 @@ def install(
         _copy_skill(skill, dest)
         installed.append(skill.name)
 
-    packages[source.package] = {
-        "version": source.distribution_version,
-        "skills": sorted(set(previously_owned).union(installed)),
-        "installed_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-    }
-    _save_manifest(resolved.manifest_path, manifest)
+    if installed:
+        packages[source.package] = {
+            "version": source.distribution_version,
+            "skills": sorted(installed),
+            "installed_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        }
+        _save_manifest(resolved.manifest_path, manifest)
+    elif had_existing_entry and not source_names:
+        # Source no longer ships any skills; remove the stale entry.
+        del packages[source.package]
+        _save_manifest(resolved.manifest_path, manifest)
+    elif orphans_removed:
+        # Orphans were cleaned even though nothing new was installed.
+        _save_manifest(resolved.manifest_path, manifest)
+    # else: nothing was placed and no prior state existed — leave manifest alone.
 
     return InstallResult(
         package=source.package,
@@ -94,6 +118,7 @@ def install(
         installed=tuple(installed),
         skipped=tuple(skipped),
         replaced=tuple(replaced),
+        orphans_removed=tuple(orphans_removed),
     )
 
 

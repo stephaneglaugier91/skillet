@@ -42,7 +42,7 @@ def test_find_source_missing_raises(fake_package):
         find_source("does-not-exist")
 
 
-def test_skill_root_with_direct_skill_md(tmp_path, fake_package, monkeypatch):
+def test_skill_root_with_direct_skill_md(tmp_path, monkeypatch):
     # Build a package whose skills entry-point points to a directory that
     # itself contains SKILL.md (rather than a parent of skill subdirectories).
     import importlib.metadata as md
@@ -58,7 +58,9 @@ def test_skill_root_with_direct_skill_md(tmp_path, fake_package, monkeypatch):
     skills.mkdir()
     (skills / "__init__.py").write_text("")
     (skills / "SKILL.md").write_text("# beta direct")
-    sys.path.insert(0, str(site))
+    monkeypatch.syspath_prepend(str(site))
+    sys.modules.pop("betapkg", None)
+    sys.modules.pop("betapkg.skills", None)
 
     ep = SimpleNamespace(
         name="betapkg",
@@ -90,7 +92,9 @@ def test_no_skills_declared_raises(tmp_path, monkeypatch):
     skills = pkg / "skills"
     skills.mkdir()
     (skills / "__init__.py").write_text("")
-    sys.path.insert(0, str(site))
+    monkeypatch.syspath_prepend(str(site))
+    sys.modules.pop("empty", None)
+    sys.modules.pop("empty.skills", None)
 
     ep = SimpleNamespace(
         name="empty",

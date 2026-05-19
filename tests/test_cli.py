@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -62,7 +63,8 @@ def test_cli_where(fake_project, capsys):
     rc = main(["where"])
     assert rc == 0
     out = capsys.readouterr().out.strip()
-    assert out.endswith(".claude/skills")
+    # Compare via Path so the test works on Windows (backslash separators) too.
+    assert out.endswith(str(Path(".claude") / "skills"))
 
 
 def test_package_main_does_not_require_package_arg(fake_package, fake_project, capsys):

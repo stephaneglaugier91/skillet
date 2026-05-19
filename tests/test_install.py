@@ -56,6 +56,24 @@ def test_install_skips_unowned_existing_dir_without_force(fake_package, fake_pro
     assert (existing / "SKILL.md").read_text() == "# alpha-existing"
 
 
+def test_install_with_all_skips_does_not_create_manifest_entry(fake_package, fake_project):
+    """When every skill is skipped on a fresh install, we shouldn't record an
+    empty manifest entry that falsely claims skillet owns the package."""
+    fake_package("alpha", skills={"alpha": "# new"})
+    existing = fake_project / ".claude" / "skills" / "alpha"
+    existing.mkdir(parents=True)
+    (existing / "SKILL.md").write_text("# preexisting")
+
+    install("alpha", Target.LOCAL)
+
+    manifest_path = fake_project / ".claude" / "skills" / ".skillet.json"
+    # Either no manifest at all, or no entry for this package.
+    if manifest_path.exists():
+        manifest = json.loads(manifest_path.read_text())
+        assert "alpha" not in manifest["packages"]
+    assert "alpha" not in list_installed(Target.LOCAL)
+
+
 def test_install_force_overwrites_unowned_dir(fake_package, fake_project):
     fake_package("alpha", skills={"alpha": "# alpha-new"})
     existing = fake_project / ".claude" / "skills" / "alpha"
@@ -80,6 +98,26 @@ def test_reinstall_overwrites_previously_owned_skill(fake_package, fake_project)
     assert result.skipped == ()
     skill_md = fake_project / ".claude" / "skills" / "alpha" / "SKILL.md"
     assert skill_md.read_text() == "# v2"
+
+
+def test_reinstall_removes_orphan_skills_no_longer_shipped(fake_package, fake_project):
+    """When a package previously shipped skills 'a' and 'b' but the new version
+    only ships 'a', the orphan 'b' should be removed from disk and the manifest
+    so a subsequent uninstall doesn't get confused."""
+    fake_package("alpha", skills={"a": "# a-v1", "b": "# b-v1"})
+    install("alpha", Target.LOCAL)
+    fake_package("alpha", skills={"a": "# a-v2"})
+
+    result = install("alpha", Target.LOCAL)
+
+    skills_dir = fake_project / ".claude" / "skills"
+    assert (skills_dir / "a").is_dir()
+    assert not (skills_dir / "b").exists()
+    assert result.installed == ("a",)
+    assert result.orphans_removed == ("b",)
+
+    manifest = json.loads((skills_dir / ".skillet.json").read_text())
+    assert manifest["packages"]["alpha"]["skills"] == ["a"]
 
 
 def test_uninstall_removes_skills_and_manifest_entry(fake_package, fake_project):
