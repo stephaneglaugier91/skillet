@@ -101,7 +101,7 @@ from skillet.cli import package_main
 
 
 def main() -> int:
-    return package_main("pandas")
+    return package_main("pandas", prog="pandas-skillet")
 ```
 
 ```toml

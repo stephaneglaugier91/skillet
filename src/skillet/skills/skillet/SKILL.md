@@ -17,10 +17,10 @@ installing/managing skills as an end user.
 ## End-user CLI
 
 ```bash
-skillet install <pkg> [--local|--user] [-f]   # install pkg's skills
-skillet uninstall <pkg> [--local|--user]      # remove pkg's skills
-skillet list [--available]                     # list installed; --available shows discoverable
-skillet where [--local|--user]                # print the target dir
+skillet install <pkg> [--local|--user] [-f]      # install pkg's skills
+skillet uninstall <pkg> [--local|--user]         # remove pkg's skills
+skillet list [--local|--user] [--available]      # list installed in target; --available shows discoverable
+skillet where [--local|--user]                   # print the target dir
 skillet --version
 ```
 
@@ -100,7 +100,10 @@ from skillet.cli import package_main
 
 
 def main() -> int:
-    return package_main("mypkg")
+    # Pass `prog=` so `mypkg-skillet --help` prints the right program
+    # name. Default would be "mypkg skillet" (with a space), which
+    # doesn't match the installed console_script.
+    return package_main("mypkg", prog="mypkg-skillet")
 ```
 
 ```toml
