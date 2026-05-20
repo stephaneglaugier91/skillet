@@ -55,17 +55,14 @@ def fake_package(tmp_path, monkeypatch):
         # syspath_prepend is auto-reverted at teardown; raw sys.path.insert is not.
         monkeypatch.syspath_prepend(str(site))
 
-        ep = _FakeEntryPoint(name=name, value=f"{name}.skills", dist_name=name, dist_version=version)
+        ep = _FakeEntryPoint(
+            name=name, value=f"{name}.skills", dist_name=name, dist_version=version
+        )
 
-        def fake_entry_points():
-            class EPs:
-                def select(self, group):
-                    return [ep] if group == "skillet.skills" else []
-
-                def get(self, group, default=None):
-                    return [ep] if group == "skillet.skills" else (default or [])
-
-            return EPs()
+        def fake_entry_points(*, group: str | None = None):
+            if group == "skillet.skills":
+                return [ep]
+            return []
 
         monkeypatch.setattr(md, "entry_points", fake_entry_points)
         # Drop any cached import so a re-created package on disk is re-imported.
@@ -87,7 +84,7 @@ def fake_package(tmp_path, monkeypatch):
 def fake_home(tmp_path, monkeypatch):
     home = tmp_path / "home"
     home.mkdir()
-    monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))  # type: ignore[arg-type]
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))
     return home
 
 

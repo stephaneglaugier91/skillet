@@ -1,11 +1,19 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
 
+import skillet
 from skillet.cli import main, package_main
+
+
+def test_version_is_resolved_from_installed_metadata():
+    # If this fails, the package isn't installed (e.g., somebody added a
+    # raw `python` invocation without `uv sync` first), or the metadata
+    # name in pyproject.toml drifted from "skillet".
+    assert skillet.__version__ != "0.0.0+unknown"
+    assert skillet.__version__  # non-empty
 
 
 def test_cli_install_local(fake_package, fake_project, capsys):

@@ -1,0 +1,76 @@
+name: Bug report
+description: Report a bug or unexpected behavior in skillet.
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report! Please fill in as much
+        of the template below as you can.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: A clear, concise description of the bug.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: |
+        Minimal steps (or a minimal example package) that reproduce the bug.
+        Include the exact `skillet` commands you ran.
+      placeholder: |
+        1. `pip install ...`
+        2. `skillet install ...`
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include any error messages or tracebacks.
+    validations:
+      required: true
+
+  - type: input
+    id: skillet-version
+    attributes:
+      label: skillet version
+      description: Output of `skillet --version`.
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      description: Output of `python --version`.
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: e.g. macOS 14.5, Ubuntu 24.04, Windows 11
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Links, screenshots, related issues.

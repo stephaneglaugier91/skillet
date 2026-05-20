@@ -1,5 +1,13 @@
 # skillet
 
+[![CI](https://github.com/stephaneglaugier91/skillet/actions/workflows/ci.yml/badge.svg)](https://github.com/stephaneglaugier91/skillet/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/stephaneglaugier91/skillet/branch/main/graph/badge.svg)](https://codecov.io/gh/stephaneglaugier91/skillet)
+[![PyPI version](https://img.shields.io/pypi/v/skillet.svg)](https://pypi.org/project/skillet/)
+[![Python versions](https://img.shields.io/pypi/pyversions/skillet.svg)](https://pypi.org/project/skillet/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
+
 Ship Claude Code skills alongside your Python package.
 
 Package authors drop skill files into their package and declare them in
@@ -143,6 +151,23 @@ uninstall("pandas", Target.LOCAL)
 
 See `examples/pandasx/` for a complete demo package.
 
+## Development
+
+skillet uses [uv](https://docs.astral.sh/uv/) and supports Python 3.12+.
+All dev workflows go through `make`:
+
+```bash
+git clone https://github.com/stephaneglaugier91/skillet
+cd skillet
+make sync       # install deps
+make hooks      # install pre-commit hooks
+make check      # lint + format-check + types + tests
+make help       # see every target
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow and
+[RELEASING.md](RELEASING.md) for how releases are cut.
+
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).

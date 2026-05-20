@@ -1,34 +1,160 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "skillet"
 version = "0.1.0"
 description = "Ship Claude Code skills alongside your Python package."
 readme = "README.md"
-requires-python = ">=3.10"
-license = { text = "MIT" }
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "skillet contributors" }]
 keywords = ["claude", "claude-code", "skills", "packaging"]
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "License :: OSI Approved :: MIT License",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
     "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
 ]
+dependencies = []
 
 [project.scripts]
 skillet = "skillet.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/stephaneglaugier91/skillet"
+Source = "https://github.com/stephaneglaugier91/skillet"
+Issues = "https://github.com/stephaneglaugier91/skillet/issues"
+Changelog = "https://github.com/stephaneglaugier91/skillet/releases"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[dependency-groups]
+dev = [
+    "mypy>=1.13",
+    "pre-commit>=4.0",
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    # Keep aligned with the `rev:` in .pre-commit-config.yaml so CI's
+    # `make pre-commit` and local `make lint` use the same version.
+    "ruff==0.15.13",
+]
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/skillet"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/README.md",
+    "/LICENSE",
+    "/pyproject.toml",
+]
+
+# ---------------------------------------------------------------------------
+# Ruff: lint + format
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+extend-exclude = ["examples"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "UP",   # pyupgrade
+    "RUF",  # ruff-specific
+    "SIM",  # flake8-simplify
+    "PT",   # flake8-pytest-style
+    "PTH",  # flake8-use-pathlib
+    "N",    # pep8-naming
+    "ARG",  # flake8-unused-arguments
+    "RET",  # flake8-return
+    "PIE",  # flake8-pie
+    "TID",  # flake8-tidy-imports
+]
+ignore = [
+    "E501",  # line too long — formatter handles it
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ARG", "N802", "PT004"]
+"src/skillet/__main__.py" = ["I001"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["skillet"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+# ---------------------------------------------------------------------------
+# Mypy
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.12"
+files = ["src", "tests"]
+strict = true
+warn_unreachable = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+enable_error_code = ["redundant-self", "redundant-expr", "truthy-bool"]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_decorators = false
+
+# ---------------------------------------------------------------------------
+# Pytest
+# ---------------------------------------------------------------------------
 [tool.pytest.ini_options]
+minversion = "8.0"
 testpaths = ["tests"]
-addopts = "-ra"
+addopts = [
+    "-ra",
+    "--strict-config",
+    "--strict-markers",
+]
+xfail_strict = true
+
+# ---------------------------------------------------------------------------
+# Coverage
+# ---------------------------------------------------------------------------
+[tool.coverage.run]
+branch = true
+source = ["skillet"]
+parallel = true
+
+[tool.coverage.paths]
+source = ["src/skillet", "*/site-packages/skillet"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "raise AssertionError",
+    "@overload",
+]
+
+# ---------------------------------------------------------------------------
+# uv
+# ---------------------------------------------------------------------------
+[tool.uv]
+default-groups = ["dev"]

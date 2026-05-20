@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import json
 
-import pytest
-
 from skillet.install import install, list_installed, uninstall
 from skillet.paths import Target, resolve_target
 

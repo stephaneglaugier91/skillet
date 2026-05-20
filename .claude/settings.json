@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(make:*)",
+      "Bash(uv run:*)",
+      "Bash(uv sync:*)",
+      "Bash(uv lock:*)",
+      "Bash(uv build:*)",
+      "Bash(uv tool run:*)",
+      "Bash(uv python:*)",
+      "Bash(uv pip list:*)",
+      "Bash(uv tree:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git stash list:*)",
+      "Bash(git remote -v:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(cat pyproject.toml)",
+      "Bash(cat Makefile)",
+      "Bash(cat README.md)",
+      "Bash(cat uv.lock)",
+      "Bash(ls:*)",
+      "Bash(pwd)",
+      "Bash(which:*)",
+      "Bash(find . -type f:*)",
+      "Bash(find . -type d:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(git tag:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean:*)",
+      "Bash(git branch -D:*)",
+      "Bash(git rebase:*)",
+      "Bash(git merge:*)",
+      "Bash(rm -rf:*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/post_edit_format.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
