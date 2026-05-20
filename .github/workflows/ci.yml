@@ -114,6 +114,20 @@ jobs:
       - name: Build and check distribution
         run: make build-check
 
+      # skillet ships its own skill in the wheel via the `skillet.skills`
+      # entry point. The test suite uses an editable install so it
+      # wouldn't catch a wheel that's missing the SKILL.md. Verify the
+      # built wheel contains it.
+      - name: Verify wheel ships the skillet skill
+        run: |
+          set -euo pipefail
+          wheel=$(ls dist/skillet-*.whl)
+          contents=$(python -m zipfile -l "$wheel")
+          echo "$contents" | grep -q 'skillet/skills/skillet/SKILL.md' \
+            || { echo "::error::SKILL.md is missing from the wheel"; \
+                 echo "$contents"; exit 1; }
+          echo "OK: $(echo "$contents" | grep 'skillet/skills/skillet/SKILL.md')"
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:

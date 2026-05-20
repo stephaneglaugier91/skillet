@@ -186,7 +186,9 @@ def package_main(
         # pandas/_skillet_entry.py
         from skillet.cli import package_main
         def main():
-            raise SystemExit(package_main("pandas"))
+            # Pass `prog=` so `--help` reports the installed script
+            # name; the default is "<pkg> skillet" (with a space).
+            raise SystemExit(package_main("pandas", prog="pandas-skillet"))
     """
     parser = build_parser(prog=prog or f"{package_name} skillet", fixed_package=package_name)
     args = parser.parse_args(argv)
