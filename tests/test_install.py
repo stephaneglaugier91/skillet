@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 
 from skillet.install import install, list_installed, uninstall
-from skillet.paths import Target, resolve_target
+from skillet.paths import Host, Target, resolve_target
 
 
 def test_install_local_copies_skills_and_writes_manifest(fake_package, fake_project):
@@ -29,6 +29,33 @@ def test_install_user_target_uses_home(fake_package, fake_home):
     install("beta", Target.USER)
 
     assert (fake_home / ".claude" / "skills" / "beta" / "SKILL.md").is_file()
+
+
+def test_install_codex_target_uses_agents_skills(fake_package, fake_project):
+    fake_package("beta", skills={"beta": "# beta"})
+
+    result = install("beta", Target.LOCAL, Host.CODEX)
+
+    assert result.host is Host.CODEX
+    assert (fake_project / ".agents" / "skills" / "beta" / "SKILL.md").is_file()
+    assert not (fake_project / ".claude").exists()
+
+
+def test_installed_manifests_are_separate_per_host(fake_package, fake_project):
+    fake_package("alpha", skills={"alpha": "# alpha"})
+
+    install("alpha", Target.LOCAL, Host.CLAUDE)
+    install("alpha", Target.LOCAL, Host.PI)
+
+    assert "alpha" in list_installed(Target.LOCAL, Host.CLAUDE)
+    assert "alpha" in list_installed(Target.LOCAL, Host.PI)
+    assert (fake_project / ".claude" / "skills" / ".skillet.json").is_file()
+    assert (fake_project / ".pi" / "skills" / ".skillet.json").is_file()
+
+    uninstall("alpha", Target.LOCAL, Host.CLAUDE)
+
+    assert not (fake_project / ".claude" / "skills" / "alpha").exists()
+    assert (fake_project / ".pi" / "skills" / "alpha" / "SKILL.md").is_file()
 
 
 def test_install_multiple_skills(fake_package, fake_project):
@@ -149,9 +176,30 @@ def test_list_installed_returns_manifest_packages(fake_package, fake_project):
     assert packages["alpha"]["skills"] == ["alpha"]
 
 
-def test_resolve_target_paths(tmp_path):
-    local = resolve_target(Target.LOCAL, project_root=tmp_path)
-    user = resolve_target(Target.USER, home=tmp_path)
-    assert local.skills_dir == tmp_path / ".claude" / "skills"
-    assert user.skills_dir == tmp_path / ".claude" / "skills"
-    assert local.manifest_path == local.skills_dir / ".skillet.json"
+def test_resolve_target_paths(tmp_path, monkeypatch):
+    monkeypatch.delenv("OPENCODE_CONFIG_DIR", raising=False)
+    monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+
+    cases = [
+        (Host.CLAUDE, ".claude/skills", ".claude/skills"),
+        (Host.CODEX, ".agents/skills", ".agents/skills"),
+        (Host.PI, ".pi/skills", ".pi/agent/skills"),
+        (Host.OPENCODE, ".opencode/skills", ".config/opencode/skills"),
+    ]
+
+    for host, local_suffix, user_suffix in cases:
+        local = resolve_target(Target.LOCAL, host, project_root=tmp_path)
+        user = resolve_target(Target.USER, host, home=tmp_path)
+        assert local.host is host
+        assert user.host is host
+        assert local.skills_dir == tmp_path / local_suffix
+        assert user.skills_dir == tmp_path / user_suffix
+        assert local.manifest_path == local.skills_dir / ".skillet.json"
+
+
+def test_resolve_opencode_user_target_respects_config_env(tmp_path, monkeypatch):
+    monkeypatch.setenv("OPENCODE_CONFIG_DIR", str(tmp_path / "custom-opencode"))
+
+    resolved = resolve_target(Target.USER, Host.OPENCODE, home=tmp_path / "home")
+
+    assert resolved.skills_dir == tmp_path / "custom-opencode" / "skills"

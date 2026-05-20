@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from skillet.discovery import Skill, find_source
-from skillet.paths import ResolvedTarget, Target, resolve_target
+from skillet.paths import Host, ResolvedTarget, Target, resolve_target
 
 MANIFEST_VERSION = 1
 
@@ -25,6 +25,7 @@ class InstallResult:
     skipped: tuple[str, ...]
     replaced: tuple[str, ...]
     orphans_removed: tuple[str, ...] = ()
+    host: Host = Host.CLAUDE
 
 
 def _load_manifest(path: Path) -> Manifest:
@@ -57,14 +58,15 @@ def _copy_skill(source: Skill, dest: Path) -> None:
 def install(
     package: str,
     target: Target = Target.LOCAL,
+    host: Host = Host.CLAUDE,
     *,
     project_root: Path | None = None,
     home: Path | None = None,
     force: bool = False,
 ) -> InstallResult:
-    """Install all skills declared by `package` into the requested target."""
+    """Install all skills declared by `package` into the requested host target."""
     source = find_source(package)
-    resolved = resolve_target(target, project_root=project_root, home=home)
+    resolved = resolve_target(target, host, project_root=project_root, home=home)
     resolved.skills_dir.mkdir(parents=True, exist_ok=True)
 
     manifest = _load_manifest(resolved.manifest_path)
@@ -124,18 +126,20 @@ def install(
         skipped=tuple(skipped),
         replaced=tuple(replaced),
         orphans_removed=tuple(orphans_removed),
+        host=host,
     )
 
 
 def uninstall(
     package: str,
     target: Target = Target.LOCAL,
+    host: Host = Host.CLAUDE,
     *,
     project_root: Path | None = None,
     home: Path | None = None,
 ) -> tuple[str, ...]:
     """Uninstall all skills previously installed by `package`. Returns the names removed."""
-    resolved = resolve_target(target, project_root=project_root, home=home)
+    resolved = resolve_target(target, host, project_root=project_root, home=home)
     manifest = _load_manifest(resolved.manifest_path)
     packages = manifest["packages"]
 
@@ -161,12 +165,13 @@ def uninstall(
 
 def list_installed(
     target: Target = Target.LOCAL,
+    host: Host = Host.CLAUDE,
     *,
     project_root: Path | None = None,
     home: Path | None = None,
 ) -> dict[str, PackageEntry]:
-    """Return the manifest's packages mapping for the given target."""
-    resolved = resolve_target(target, project_root=project_root, home=home)
+    """Return the manifest's packages mapping for the given host target."""
+    resolved = resolve_target(target, host, project_root=project_root, home=home)
     packages: dict[str, PackageEntry] = _load_manifest(resolved.manifest_path)["packages"]
     return packages
 
@@ -182,6 +187,10 @@ def _match_package(
 
 
 def target_summary(
-    target: Target, *, project_root: Path | None = None, home: Path | None = None
+    target: Target,
+    host: Host = Host.CLAUDE,
+    *,
+    project_root: Path | None = None,
+    home: Path | None = None,
 ) -> ResolvedTarget:
-    return resolve_target(target, project_root=project_root, home=home)
+    return resolve_target(target, host, project_root=project_root, home=home)

@@ -1,4 +1,4 @@
-"""Ship Claude Code skills alongside your Python package."""
+"""Ship agent skills alongside your Python package."""
 
 from importlib.metadata import PackageNotFoundError as _PkgNotFound
 from importlib.metadata import version as _pkg_version
@@ -13,7 +13,7 @@ from skillet.discovery import (
     find_source,
 )
 from skillet.install import InstallResult, install, list_installed, uninstall
-from skillet.paths import Target, resolve_target
+from skillet.paths import Host, Target, resolve_target
 
 try:
     __version__ = _pkg_version("skillet")
@@ -22,6 +22,7 @@ except _PkgNotFound:  # pragma: no cover — only hit when running from a
     __version__ = "0.0.0+unknown"
 
 __all__ = [
+    "Host",
     "InstallResult",
     "NoSkillsDeclaredError",
     "PackageNotFoundError",
