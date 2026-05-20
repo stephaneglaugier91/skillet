@@ -30,6 +30,11 @@ dependencies = []
 [project.scripts]
 skillet = "skillet.cli:main"
 
+# Yes, skillet ships its own skill via its own discovery mechanism. The
+# skill files live in src/skillet/skills/skillet/.
+[project.entry-points."skillet.skills"]
+skillet = "skillet.skills"
+
 [project.urls]
 Homepage = "https://github.com/stephaneglaugier91/skillet"
 Source = "https://github.com/stephaneglaugier91/skillet"

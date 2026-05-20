@@ -5,6 +5,19 @@ import pytest
 from skillet.discovery import NoSkillsDeclaredError, PackageNotFoundError, discover, find_source
 
 
+def test_skillet_self_skill_is_discoverable():
+    """skillet ships its own skill via the same entry-point mechanism it
+    provides to other packages. This test exercises the real importlib
+    metadata (no fixture monkeypatching) and would fail if the entry
+    point or the SKILL.md got dropped from the wheel."""
+    src = find_source("skillet")
+    assert src.package == "skillet"
+    skill_names = [s.name for s in src.skills]
+    assert "skillet" in skill_names
+    skillet_skill = next(s for s in src.skills if s.name == "skillet")
+    assert (skillet_skill.path / "SKILL.md").is_file()
+
+
 def test_discover_returns_sources_with_skills(fake_package):
     fake_package("alpha", skills={"alpha": "# alpha"})
 

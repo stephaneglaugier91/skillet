@@ -20,6 +20,13 @@ no separate registry.
 pip install skillet
 ```
 
+skillet ships its own skill via skillet — install it so Claude Code knows
+how to help you use skillet itself:
+
+```bash
+skillet install skillet --local   # or --user
+```
+
 ## For users
 
 Install the skills shipped by an installed Python package into your project:
