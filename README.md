@@ -8,11 +8,11 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
 
-Ship Claude Code skills alongside your Python package.
+Ship agent skills alongside your Python package.
 
 Package authors drop skill files into their package and declare them in
-`pyproject.toml`. Users install them with one command — no extra downloads,
-no separate registry.
+`pyproject.toml`. Users install them into Claude Code, Codex, pi, or OpenCode
+with one command — no extra downloads, no separate registry.
 
 ## Install
 
@@ -20,11 +20,14 @@ no separate registry.
 pip install skillet
 ```
 
-skillet ships its own skill via skillet — install it so Claude Code knows
-how to help you use skillet itself:
+skillet ships its own skill via skillet — install it so your agent knows how
+to help you use skillet itself:
 
 ```bash
-skillet install skillet --local   # or --user
+skillet install skillet --local   # Claude Code, per-project (default)
+skillet install skillet --codex   # Codex, per-project
+skillet install skillet --pi      # pi, per-project
+skillet install skillet --opencode
 ```
 
 ## For users
@@ -32,11 +35,16 @@ skillet install skillet --local   # or --user
 Install the skills shipped by an installed Python package into your project:
 
 ```bash
-# Per-project (./.claude/skills/)
-skillet install pandas --local
+# Per-project Claude Code target (./.claude/skills/), the default
+skillet install pandas
 
-# User-wide (~/.claude/skills/)
+# User-wide Claude Code target (~/.claude/skills/)
 skillet install pandas --user
+
+# Other hosts
+skillet install pandas --codex      # ./.agents/skills/
+skillet install pandas --pi         # ./.pi/skills/
+skillet install pandas --opencode   # ./.opencode/skills/
 ```
 
 Other commands:
@@ -48,8 +56,9 @@ skillet uninstall pandas
 skillet where                 # print the target skills directory
 ```
 
-`--local` is the default. `--claude` is accepted as a (currently no-op) host
-selector — it's reserved for future targets.
+`--local` and `--claude` are the defaults. Host selectors can be passed as
+flags (`--claude`, `--codex`, `--pi`, `--opencode`) or with
+`--host {claude,codex,pi,opencode}`.
 
 ## For package authors
 
@@ -122,8 +131,8 @@ one `pytest`, `setuptools`, and pip plugins use). When you call
 
 1. Looks up entry points in the group `skillet.skills`.
 2. Imports the referenced module and finds its directory on disk.
-3. Copies each skill subdirectory into `./.claude/skills/` (or `~/.claude/skills/`).
-4. Records what was installed in `.claude/skills/.skillet.json` so
+3. Copies each skill subdirectory into the selected host's skills directory.
+4. Records what was installed in that directory's `.skillet.json` so
    `uninstall` can clean up only what skillet put there.
 
 No network calls. No central registry. The skill ships with the wheel.
@@ -131,13 +140,21 @@ No network calls. No central registry. The skill ships with the wheel.
 ## Layout in the install target
 
 ```
-.claude/
-  skills/
-    .skillet.json       # manifest of what skillet installed
-    pandas/             # one directory per skill
-      SKILL.md
-      ...
+<host skills dir>/
+  .skillet.json       # manifest of what skillet installed in this target
+  pandas/             # one directory per skill
+    SKILL.md
+    ...
 ```
+
+Target directories:
+
+| Host | `--local` | `--user` |
+| --- | --- | --- |
+| Claude Code | `./.claude/skills/` | `~/.claude/skills/` |
+| Codex | `./.agents/skills/` | `~/.agents/skills/` |
+| pi | `./.pi/skills/` | `~/.pi/agent/skills/` |
+| OpenCode | `./.opencode/skills/` | `${OPENCODE_CONFIG_DIR:-$XDG_CONFIG_HOME/opencode}/skills/` |
 
 If a skill directory already exists and skillet didn't create it, install
 skips it. Pass `--force` to overwrite.
@@ -147,11 +164,12 @@ skips it. Pass `--force` to overwrite.
 You can also drive skillet programmatically:
 
 ```python
-from skillet import install, uninstall, list_installed, Target
+from skillet import Host, Target, install, list_installed, uninstall
 
-install("pandas", Target.LOCAL)
-list_installed(Target.LOCAL)
-uninstall("pandas", Target.LOCAL)
+install("pandas", Target.LOCAL)              # Claude Code default
+install("pandas", Target.LOCAL, Host.CODEX) # Codex
+list_installed(Target.LOCAL, Host.CODEX)
+uninstall("pandas", Target.LOCAL, Host.CODEX)
 ```
 
 ## Example

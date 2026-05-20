@@ -5,13 +5,13 @@ build-backend = "hatchling.build"
 [project]
 name = "skillet"
 version = "0.1.0"
-description = "Ship Claude Code skills alongside your Python package."
+description = "Ship agent skills alongside your Python package."
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "skillet contributors" }]
-keywords = ["claude", "claude-code", "skills", "packaging"]
+keywords = ["agent-skills", "claude", "claude-code", "codex", "opencode", "packaging", "skills"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",

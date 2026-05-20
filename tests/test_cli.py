@@ -27,6 +27,27 @@ def test_cli_install_local(fake_package, fake_project, capsys):
     assert (fake_project / ".claude" / "skills" / "alpha" / "SKILL.md").is_file()
 
 
+def test_cli_install_codex(fake_package, fake_project, capsys):
+    fake_package("alpha", skills={"alpha": "# alpha"})
+
+    rc = main(["install", "alpha", "--codex"])
+
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "Installed alpha" in out
+    assert (fake_project / ".agents" / "skills" / "alpha" / "SKILL.md").is_file()
+
+
+def test_cli_install_with_host_option(fake_package, fake_project, capsys):
+    fake_package("alpha", skills={"alpha": "# alpha"})
+
+    rc = main(["install", "alpha", "--host", "opencode"])
+
+    assert rc == 0
+    capsys.readouterr()
+    assert (fake_project / ".opencode" / "skills" / "alpha" / "SKILL.md").is_file()
+
+
 def test_cli_install_unknown_package_returns_error(fake_project, capsys):
     rc = main(["install", "nope"])
     assert rc == 1
@@ -73,6 +94,13 @@ def test_cli_where(fake_project, capsys):
     out = capsys.readouterr().out.strip()
     # Compare via Path so the test works on Windows (backslash separators) too.
     assert out.endswith(str(Path(".claude") / "skills"))
+
+
+def test_cli_where_pi(fake_project, capsys):
+    rc = main(["where", "--pi"])
+    assert rc == 0
+    out = capsys.readouterr().out.strip()
+    assert out.endswith(str(Path(".pi") / "skills"))
 
 
 def test_package_main_does_not_require_package_arg(fake_package, fake_project, capsys):

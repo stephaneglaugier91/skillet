@@ -11,31 +11,64 @@ from skillet.discovery import (
     discover,
 )
 from skillet.install import install, list_installed, target_summary, uninstall
-from skillet.paths import Target
+from skillet.paths import Host, Target
 
 
 def _add_target_flags(parser: argparse.ArgumentParser) -> None:
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument(
+    target_group = parser.add_mutually_exclusive_group()
+    target_group.add_argument(
         "--local",
         dest="target",
         action="store_const",
         const=Target.LOCAL,
-        help="Install into ./.claude/skills (default).",
+        help="Install into the current project's skills directory (default).",
     )
-    group.add_argument(
+    target_group.add_argument(
         "--user",
         dest="target",
         action="store_const",
         const=Target.USER,
-        help="Install into ~/.claude/skills.",
+        help="Install into the current user's skills directory.",
     )
-    parser.add_argument(
+
+    host_group = parser.add_mutually_exclusive_group()
+    host_group.add_argument(
+        "--host",
+        dest="host",
+        type=Host,
+        choices=list(Host),
+        metavar="HOST",
+        help="Target agent host: claude, codex, pi, or opencode.",
+    )
+    host_group.add_argument(
         "--claude",
-        action="store_true",
-        help="Target Claude Code (default). Reserved for future host selectors.",
+        dest="host",
+        action="store_const",
+        const=Host.CLAUDE,
+        help="Target Claude Code (default).",
     )
-    parser.set_defaults(target=Target.LOCAL)
+    host_group.add_argument(
+        "--codex",
+        dest="host",
+        action="store_const",
+        const=Host.CODEX,
+        help="Target Codex via .agents/skills.",
+    )
+    host_group.add_argument(
+        "--pi",
+        dest="host",
+        action="store_const",
+        const=Host.PI,
+        help="Target pi.",
+    )
+    host_group.add_argument(
+        "--opencode",
+        dest="host",
+        action="store_const",
+        const=Host.OPENCODE,
+        help="Target OpenCode.",
+    )
+    parser.set_defaults(target=Target.LOCAL, host=Host.CLAUDE)
 
 
 def build_parser(
@@ -43,7 +76,7 @@ def build_parser(
 ) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog=prog,
-        description="Install Claude Code skills shipped by Python packages.",
+        description="Install agent skills shipped by Python packages.",
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -51,7 +84,7 @@ def build_parser(
     install_p = sub.add_parser(
         "install",
         help="Install a package's skills.",
-        description="Install all skills declared by a Python package's `skillet.skills` entry point.",
+        description="Install all agent skills declared by a Python package's `skillet.skills` entry point.",
     )
     if fixed_package is None:
         install_p.add_argument("package", help="Name of the installed Python package.")
@@ -93,7 +126,7 @@ def _resolve_package(args: argparse.Namespace) -> str:
 def _cmd_install(args: argparse.Namespace) -> int:
     package = _resolve_package(args)
     try:
-        result = install(package, args.target, force=args.force)
+        result = install(package, args.target, args.host, force=args.force)
     except (PackageNotFoundError, NoSkillsDeclaredError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
@@ -121,8 +154,8 @@ def _cmd_install(args: argparse.Namespace) -> int:
 
 def _cmd_uninstall(args: argparse.Namespace) -> int:
     package = _resolve_package(args)
-    removed = uninstall(package, args.target)
-    resolved = target_summary(args.target)
+    removed = uninstall(package, args.target, args.host)
+    resolved = target_summary(args.target, args.host)
     if not removed:
         print(f"No skills owned by {package!r} were found in {resolved.skills_dir}.")
         return 0
@@ -146,8 +179,8 @@ def _cmd_list(args: argparse.Namespace) -> int:
                 print(f"    • {skill.name}  ({skill.path})")
         return 0
 
-    resolved = target_summary(args.target)
-    packages = list_installed(args.target)
+    resolved = target_summary(args.target, args.host)
+    packages = list_installed(args.target, args.host)
     print(f"Skills installed in {resolved.skills_dir}:")
     if not packages:
         print("  (none)")
@@ -161,7 +194,7 @@ def _cmd_list(args: argparse.Namespace) -> int:
 
 
 def _cmd_where(args: argparse.Namespace) -> int:
-    resolved = target_summary(args.target)
+    resolved = target_summary(args.target, args.host)
     print(resolved.skills_dir)
     return 0
 

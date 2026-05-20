@@ -1,13 +1,13 @@
 ---
 name: skillet
-description: Use when the user is shipping Claude Code skills inside a Python package with `skillet` (declaring a `skillet.skills` entry point in `pyproject.toml`, laying out a `skills/` directory inside a package, or running `skillet install/list/uninstall/where`). Also use when debugging why a package's skill isn't being discovered.
+description: Use when the user is shipping agent skills for Claude Code, Codex, pi, or OpenCode inside a Python package with `skillet` (declaring a `skillet.skills` entry point in `pyproject.toml`, laying out a `skills/` directory inside a package, or running `skillet install/list/uninstall/where`). Also use when debugging why a package's skill isn't being discovered.
 ---
 
 # skillet
 
-`skillet` lets a Python package ship Claude Code skills inside its wheel.
-End users run `skillet install <pkg>` and the package's skills land in
-`./.claude/skills/` (or `~/.claude/skills/`). Discovery is the standard
+`skillet` lets a Python package ship agent skills inside its wheel.
+End users run `skillet install <pkg>` and the package's skills land in the
+selected host's skills directory. Discovery is the standard
 `importlib.metadata` entry-point group `skillet.skills` — no network,
 no separate registry.
 
@@ -17,20 +17,24 @@ installing/managing skills as an end user.
 ## End-user CLI
 
 ```bash
-skillet install <pkg> [--local|--user] [-f]      # install pkg's skills
-skillet uninstall <pkg> [--local|--user]         # remove pkg's skills
-skillet list [--local|--user] [--available]      # list installed in target; --available shows discoverable
-skillet where [--local|--user]                   # print the target dir
+skillet install <pkg> [--local|--user] [--claude|--codex|--pi|--opencode] [-f]
+skillet uninstall <pkg> [--local|--user] [--claude|--codex|--pi|--opencode]
+skillet list [--local|--user] [--claude|--codex|--pi|--opencode] [--available]
+skillet where [--local|--user] [--claude|--codex|--pi|--opencode]
 skillet --version
 ```
 
-- `--local` (default) → `./.claude/skills/`
-- `--user`            → `~/.claude/skills/`
+- `--local` and `--claude` are the defaults.
+- `--host {claude,codex,pi,opencode}` is equivalent to the host flags.
+- Claude Code: `./.claude/skills/` or `~/.claude/skills/`
+- Codex: `./.agents/skills/` or `~/.agents/skills/`
+- pi: `./.pi/skills/` or `~/.pi/agent/skills/`
+- OpenCode: `./.opencode/skills/` or the OpenCode config dir's `skills/`
 - `--force` overwrites a skill dir that exists but isn't owned by skillet
   (i.e. was put there by hand). Without it, those are skipped.
 
-A manifest at `.claude/skills/.skillet.json` tracks which skills came
-from which package, so `uninstall` removes only what skillet placed.
+A `.skillet.json` manifest inside each target skills directory tracks which
+skills came from which package, so `uninstall` removes only what skillet placed.
 
 ## Shipping a skill from your package
 
@@ -124,12 +128,13 @@ tool):
 from skillet import (
     install, uninstall, list_installed,        # actions
     discover, find_source,                      # discovery
-    Target,                                     # LOCAL or USER
+    Host, Target,                               # host selector; LOCAL or USER
     InstallResult, SkillSource, Skill,          # data types
     SkilletError, PackageNotFoundError, NoSkillsDeclaredError,
 )
 
-result = install("mypkg", Target.LOCAL)
+result = install("mypkg", Target.LOCAL)              # Claude Code default
+codex_result = install("mypkg", Target.LOCAL, Host.CODEX)
 # result.installed, result.skipped, result.replaced, result.orphans_removed
 ```
 
@@ -163,13 +168,13 @@ operation — it never accumulates stale ownership claims.
   weren't packaged into the wheel. See the "Make sure the skill files
   end up in the wheel" section above.
 
-**Skill installed but Claude Code doesn't see it**
-- Skills live in `.claude/skills/<name>/SKILL.md`. Confirm the path:
-  `skillet where` + `ls .claude/skills/`.
+**Skill installed but the target agent doesn't see it**
+- Confirm the target path with the matching host flag, e.g.
+  `skillet where --codex` or `skillet where --opencode`.
 - Each skill needs valid frontmatter (`name:` and `description:` at
   minimum). Open the `SKILL.md` and check.
 - For project-scoped skills you must be inside the project directory
-  when Claude Code starts.
+  when the agent starts.
 
 **Skill is the wrong version after upgrading the source package**
 - skillet doesn't auto-reinstall. Re-run `skillet install <pkg>` after
