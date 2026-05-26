@@ -49,7 +49,7 @@ dev = [
     "pytest-cov>=6.0",
     # Keep aligned with the `rev:` in .pre-commit-config.yaml so CI's
     # `make pre-commit` and local `make lint` use the same version.
-    "ruff==0.15.13",
+    "ruff==0.15.14",
 ]
 
 [tool.hatch.build.targets.wheel]
